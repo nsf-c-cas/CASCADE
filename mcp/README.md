@@ -39,7 +39,7 @@ No image inspection, manual manifest command, pinning, or `.env.images` is neede
 Old `CASCADE_LEGACY_IMAGE`/image-ID settings are ignored; stop passing `.env.images`.
 
 Wait for `cascade-mcp` to become healthy. Register
-`https://YOUR_NGROK_DOMAIN/cascade/mcp` in the MCP client. Application ports remain private.
+`https://YOUR_NGROK_DOMAIN/cascade/mcp` in the MCP client. Note that `Authentication` option should be set to `No Authentication`, not `OAuth`. Application ports remain private.
 Tools: `submit_analysis`, `get_job_status`, `get_job_result`, `cancel_job`.
 Submit one SMILES with `nuclei=["1H"]` or `["13C"]`; preserve `request_id` across retries.
 
