@@ -1,0 +1,18 @@
+[project]
+name = "cascade-mcp"
+version = "0.1.0"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "fastmcp==2.13.0.2",
+  "celery[redis]==5.5.3",
+  "redis==5.2.1",
+  "pillow==11.3.0",
+]
+
+[dependency-groups]
+dev = ["pytest==8.4.2", "pytest-asyncio==1.2.0"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+asyncio_mode = "auto"

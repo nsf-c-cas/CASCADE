@@ -1,0 +1,97 @@
+name: cascade
+
+x-control: &control
+  image: cascade-control:local
+  platform: linux/amd64
+  restart: unless-stopped
+  init: true
+  environment: &environment
+    JOBS_DIR: /data/jobs
+    CELERY_BROKER_URL: redis://cascade-redis:6379/0
+    CELERY_RESULT_BACKEND: redis://cascade-redis:6379/1
+    PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:?Set PUBLIC_BASE_URL}
+    MAX_RUNTIME_SECONDS: ${MAX_RUNTIME_SECONDS:-3600}
+    CANCEL_GRACE_SECONDS: ${CANCEL_GRACE_SECONDS:-10}
+    RESULT_RETENTION_SECONDS: ${RESULT_RETENTION_SECONDS:-86400}
+    RECORD_RETENTION_SECONDS: ${RECORD_RETENTION_SECONDS:-604800}
+    CLEANUP_INTERVAL_SECONDS: ${CLEANUP_INTERVAL_SECONDS:-300}
+    DISPATCH_DEADLINE_SECONDS: ${DISPATCH_DEADLINE_SECONDS:-60}
+    MAX_QUEUED_JOBS: ${MAX_QUEUED_JOBS:-20}
+    MAX_ATOMS: ${MAX_ATOMS:-100}
+    MIN_FREE_BYTES: ${MIN_FREE_BYTES:-67108864}
+  volumes:
+    - type: bind
+      source: ${PROJECT_ROOT:?Set absolute PROJECT_ROOT}/mcp-results/cascade
+      target: /data/jobs
+      bind: {create_host_path: false}
+  networks: [default]
+  depends_on:
+    cascade-redis: {condition: service_healthy}
+  logging:
+    driver: json-file
+    options: {max-size: '10m', max-file: '3'}
+
+services:
+  cascade-mcp:
+    <<: *control
+    build:
+      context: ..
+      dockerfile: mcp/Dockerfile
+      target: control
+    environment:
+      <<: *environment
+      MCP_ALLOWED_HOSTS: ${MCP_ALLOWED_HOSTS:-localhost,127.0.0.1,cascade-mcp}
+      MCP_ALLOWED_ORIGINS: ${MCP_ALLOWED_ORIGINS:-http://localhost}
+    networks: [default, proxy]
+    command: [/opt/control/bin/python, -m, cascade_mcp.server]
+    healthcheck:
+      test: [CMD, /opt/control/bin/python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz',timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  cascade-worker:
+    <<: *control
+    image: cascade-worker:local
+    build:
+      context: ..
+      dockerfile: mcp/Dockerfile
+      target: worker
+    environment:
+      <<: *environment
+      OMP_NUM_THREADS: '1'
+      MKL_NUM_THREADS: '1'
+      OPENBLAS_NUM_THREADS: '1'
+      TF_CPP_MIN_LOG_LEVEL: '1'
+    command: [/opt/control/bin/python, -m, cascade_mcp.worker]
+    cpus: ${WORKER_CPUS:-2}
+    mem_limit: ${WORKER_MEMORY:-4g}
+    stop_grace_period: 30s
+
+  cascade-maintenance:
+    <<: *control
+    command: [/opt/control/bin/python, -m, cascade_mcp.maintenance]
+
+  cascade-redis:
+    image: redis:7.4.6-alpine@sha256:3b73847e72874be07e6657b129a94761662b79bc0f679273757d4218573b2a98
+    restart: unless-stopped
+    command: [redis-server, --appendonly, 'yes']
+    volumes: [redis-data:/data]
+    networks: [default]
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 5s
+      timeout: 2s
+      retries: 10
+    logging:
+      driver: json-file
+      options: {max-size: '10m', max-file: '3'}
+
+networks:
+  default: {}
+  proxy:
+    external: true
+    name: ${MCP_PROXY_NETWORK:-mcp-proxy}
+
+volumes:
+  redis-data:

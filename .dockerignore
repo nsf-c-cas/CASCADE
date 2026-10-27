@@ -1,0 +1,14 @@
+**
+!mcp/
+!mcp/**
+!LICENSE
+!README.md
+!cascade-Jupyternotebook-SMILES/
+!cascade-Jupyternotebook-SMILES/models/
+!cascade-Jupyternotebook-SMILES/models/**
+mcp/.venv/
+mcp/results/
+mcp/.env*
+mcp/**/__pycache__/
+mcp/.pytest_cache/
+mcp/build/

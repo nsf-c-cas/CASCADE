@@ -1,0 +1,7 @@
+results/
+__pycache__/
+.venv/
+.pytest_cache/
+build/
+.env*
+!.env*.example

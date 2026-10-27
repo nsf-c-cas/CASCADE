@@ -1,0 +1,21 @@
+name: cascade-standalone
+
+services:
+  cascade:
+    platform: linux/amd64
+    build:
+      context: ..
+      dockerfile: mcp/Dockerfile
+      target: legacy
+    # Allow writing to the host results directory, including on Linux.
+    user: root
+    volumes:
+      - type: bind
+        source: ..
+        target: /src
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./results
+        target: /output

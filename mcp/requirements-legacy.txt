@@ -1,0 +1,16 @@
+# Versions specified by CASCADE/environment.yml.
+tensorflow==1.12.0
+tqdm==4.54.0
+scipy==1.4.1
+scikit-learn==0.22.2.post1
+
+# Match both webapp_env.yml files and the saved models' keras_version.
+keras==2.2.4
+
+# Initial compatibility pins; not a fully resolved dependency lock.
+numpy==1.18.5
+pandas==0.25.3
+h5py==2.10.0
+protobuf==3.19.6
+# Required by the mkl-random package installed through Conda.
+Cython==0.29.36
